@@ -1,10 +1,13 @@
 package com.example.centraledellebolle.ui.login
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -42,6 +45,8 @@ fun LoginScreen(vm: LoginViewModel, onLoginSuccess: () -> Unit) {
             onValueChange = { password = it },
             label = { Text("Password") },
             singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             enabled = loginState !is LoginUiState.Loading
         )
 
