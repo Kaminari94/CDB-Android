@@ -1,6 +1,6 @@
 package com.example.centraledellebolle.network
 
-import com.google.gson.JsonElement
+import com.example.centraledellebolle.data.BolletteResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -27,5 +27,5 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
     @GET("api/bolle/")
-    suspend fun getBolle(): JsonElement
+    suspend fun getBolle(): BolletteResponse
 }

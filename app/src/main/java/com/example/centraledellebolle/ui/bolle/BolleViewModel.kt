@@ -17,7 +17,7 @@ class BolleViewModel(private val bolleRepository: BolleRepository) : ViewModel()
             _bolleState.value = BolleUiState.Loading
             val result = bolleRepository.getBolle()
             _bolleState.value = result.fold(
-                onSuccess = { BolleUiState.Success(it) },
+                onSuccess = { BolleUiState.Success(it.results) },
                 onFailure = { BolleUiState.Error(it.message ?: "Errore sconosciuto") }
             )
         }
