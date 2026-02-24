@@ -1,6 +1,10 @@
 package com.example.centraledellebolle.network
 
 import com.example.centraledellebolle.data.BolletteResponse
+import com.example.centraledellebolle.data.CustomersResponse
+import com.example.centraledellebolle.data.QuickBollaRequest
+import com.example.centraledellebolle.data.QuickBollaSuccessResponse
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -28,4 +32,10 @@ interface ApiService {
 
     @GET("api/bolle/")
     suspend fun getBolle(): BolletteResponse
+
+    @POST("api/bolle/quick/")
+    suspend fun quickBolla(@Body request: QuickBollaRequest): Response<QuickBollaSuccessResponse>
+
+    @GET("api/customers/")
+    suspend fun getCustomers(): CustomersResponse
 }

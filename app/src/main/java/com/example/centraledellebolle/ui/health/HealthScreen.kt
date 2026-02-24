@@ -25,7 +25,7 @@ fun HealthScreen(vm: HealthViewModel) {
     ) {
 
         Text(
-            text = "Connessione:",
+            text = "Connessione al Server:",
             style = MaterialTheme.typography.titleMedium
         )
 

@@ -21,6 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,15 +32,29 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun BolleScreen(vm: BolleViewModel) {
+fun BolleScreen(vm: BolleViewModel, onCreateNew: () -> Unit) {
+    var showQuickBolla by remember { mutableStateOf(false) }
+
+    if (showQuickBolla) {
+        onCreateNew()
+    } else {
+        BolleListScreen(vm = vm, onCreateNew = { showQuickBolla = true })
+    }
+}
+
+@Composable
+fun BolleListScreen(vm: BolleViewModel, onCreateNew: () -> Unit) {
     val bolleState by vm.bolleState.collectAsState()
 
+    // Carica i dati solo la prima volta
     LaunchedEffect(Unit) {
-        vm.loadBolle()
+        if (bolleState is BolleUiState.Idle) {
+            vm.loadBolle()
+        }
     }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Button(onClick = { /* Handle new bolla */ }) {
+        Button(onClick = onCreateNew, modifier = Modifier.fillMaxWidth()) {
             Text("Crea nuova bolla")
         }
 
@@ -77,24 +94,26 @@ fun BollaItem(bolla: Bolla) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .padding(16.dp),
         ) {
 
-            Text(text = "Cliente: ${bolla.clienteNome}", style = MaterialTheme.typography.titleMedium)
-            Text(text = "Data: ${formatDate(bolla.data)}")
-            Text(text = "Numero: ${bolla.numero}")
-            Row {
+            Text(text = bolla.clienteNome, style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(8.dp))
+            Text(text = "Data: ${formatDate(bolla.data)}", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "Documento: ${bolla.tipoDocumentoNome} n. ${bolla.numero}", style = MaterialTheme.typography.bodyMedium)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { /* Handle details */ }) {
-                    Text("Dettagli", style = MaterialTheme.typography.titleMedium)
+                    Text("Dettagli")
+                }
+                TextButton(onClick = { /* Handle print */ }) {
+                    Text("Stampa")
                 }
                 TextButton(onClick = { /* Handle edit */ }) {
-                    Text("Modifica", style = MaterialTheme.typography.titleMedium)
+                    Text("Modifica")
                 }
                 TextButton(onClick = { /* Handle delete */ }) {
-                    Text("Elimina", style = MaterialTheme.typography.titleMedium)
+                    Text("Elimina")
                 }
             }
         }
