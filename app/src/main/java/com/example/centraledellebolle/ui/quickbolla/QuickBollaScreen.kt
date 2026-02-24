@@ -134,7 +134,7 @@ private fun CustomerSelector(vm: QuickBollaViewModel) {
                     ) {
                         state.customers.forEach { customer ->
                             DropdownMenuItem(
-                                text = { Text(customer.nome) },
+                                text = { Text(customer.nome + " - " + customer.via) },
                                 onClick = {
                                     vm.selectCustomer(customer)
                                     isExpanded = false

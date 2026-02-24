@@ -83,6 +83,7 @@ fun BollaItem(bolla: Bolla) {
         ) {
 
             Text(text = bolla.clienteNome, style = MaterialTheme.typography.titleLarge)
+            Text(text = bolla.clienteVia, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Text(text = "Data: ${formatDate(bolla.data)}", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Documento: ${bolla.tipoDocumentoNome} n. ${bolla.numero}", style = MaterialTheme.typography.bodyMedium)

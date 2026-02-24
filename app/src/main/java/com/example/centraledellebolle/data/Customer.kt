@@ -4,5 +4,6 @@ package com.example.centraledellebolle.data
  */
 data class Customer(
     val id: Int,
-    val nome: String
+    val nome: String,
+    val via: String
 )
