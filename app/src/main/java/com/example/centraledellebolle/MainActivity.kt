@@ -118,9 +118,7 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
     NavHost(navController = navController, startDestination = Screen.Bolle.route, modifier = modifier) {
         composable(Screen.Bolle.route) {
             val vm: BolleViewModel = viewModel(factory = BolleViewModelFactory(appContainer.bolleRepository))
-            BolleScreen(vm = vm) {
-                navController.navigate(Screen.QuickBolla.route)
-            }
+            BolleScreen(vm = vm)
         }
         composable(Screen.QuickBolla.route) {
             val vm: QuickBollaViewModel = viewModel(

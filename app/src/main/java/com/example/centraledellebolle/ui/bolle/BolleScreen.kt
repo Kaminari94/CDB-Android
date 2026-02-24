@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -21,9 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,18 +28,12 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun BolleScreen(vm: BolleViewModel, onCreateNew: () -> Unit) {
-    var showQuickBolla by remember { mutableStateOf(false) }
-
-    if (showQuickBolla) {
-        onCreateNew()
-    } else {
-        BolleListScreen(vm = vm, onCreateNew = { showQuickBolla = true })
-    }
+fun BolleScreen(vm: BolleViewModel) {
+    BolleListScreen(vm = vm)
 }
 
 @Composable
-fun BolleListScreen(vm: BolleViewModel, onCreateNew: () -> Unit) {
+fun BolleListScreen(vm: BolleViewModel) {
     val bolleState by vm.bolleState.collectAsState()
 
     // Carica i dati solo la prima volta
@@ -54,12 +44,6 @@ fun BolleListScreen(vm: BolleViewModel, onCreateNew: () -> Unit) {
     }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        Button(onClick = onCreateNew, modifier = Modifier.fillMaxWidth()) {
-            Text("Crea nuova bolla")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
