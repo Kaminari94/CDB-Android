@@ -9,7 +9,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 class RetrofitInstance(tokenStore: TokenStore) {
 
     private companion object {
-        private const val BASE_URL = "http://10.0.2.2:8000/"
+        //private const val BASE_URL = "http://10.0.2.2:8000/"
+        private const val BASE_URL = "http://192.168.1.166:8000/"
     }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {

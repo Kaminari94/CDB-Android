@@ -1,5 +1,6 @@
 package com.example.centraledellebolle.network
 
+import com.example.centraledellebolle.data.BollaDetail
 import com.example.centraledellebolle.data.BolletteResponse
 import com.example.centraledellebolle.data.CustomersResponse
 import com.example.centraledellebolle.data.QuickBollaRequest
@@ -8,6 +9,8 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class HealthResponse(
     val ok: Boolean
@@ -31,7 +34,10 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): LoginResponse
 
     @GET("api/bolle/")
-    suspend fun getBolle(): BolletteResponse
+    suspend fun getBolle(@Query("date") date: String): BolletteResponse
+
+    @GET("api/bolle/{id}/")
+    suspend fun getBollaDetail(@Path("id") id: Int): BollaDetail
 
     @POST("api/bolle/quick/")
     suspend fun quickBolla(@Body request: QuickBollaRequest): Response<QuickBollaSuccessResponse>

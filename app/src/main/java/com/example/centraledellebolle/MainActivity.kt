@@ -22,13 +22,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.centraledellebolle.data.AppContainer
 import com.example.centraledellebolle.ui.MainViewModel
 import com.example.centraledellebolle.ui.MainViewModelFactory
+import com.example.centraledellebolle.ui.bolle.BollaDetailScreen
+import com.example.centraledellebolle.ui.bolle.BollaDetailViewModel
+import com.example.centraledellebolle.ui.bolle.BollaDetailViewModelFactory
 import com.example.centraledellebolle.ui.bolle.BolleScreen
 import com.example.centraledellebolle.ui.bolle.BolleViewModel
 import com.example.centraledellebolle.ui.bolle.BolleViewModelFactory
@@ -118,7 +123,19 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
     NavHost(navController = navController, startDestination = Screen.Bolle.route, modifier = modifier) {
         composable(Screen.Bolle.route) {
             val vm: BolleViewModel = viewModel(factory = BolleViewModelFactory(appContainer.bolleRepository))
-            BolleScreen(vm = vm)
+            BolleScreen(vm = vm, onNavigateToDetail = { bollaId ->
+                navController.navigate("bolla_detail/$bollaId")
+            })
+        }
+        composable(
+            route = "bolla_detail/{bollaId}",
+            arguments = listOf(navArgument("bollaId") { type = NavType.IntType })
+        ) {
+            val bollaId = it.arguments?.getInt("bollaId") ?: 0
+            val vm: BollaDetailViewModel = viewModel(
+                factory = BollaDetailViewModelFactory(appContainer.bolleRepository, bollaId)
+            )
+            BollaDetailScreen(vm = vm, onNavigateBack = { navController.popBackStack() })
         }
         composable(Screen.QuickBolla.route) {
             val vm: QuickBollaViewModel = viewModel(
