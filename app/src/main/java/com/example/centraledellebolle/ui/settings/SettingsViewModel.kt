@@ -106,7 +106,7 @@ class SettingsViewModel(
             }
 
             _printingState.value = PrintingUiState.Printing
-            val result = bluetoothPrinterService.printTest(macAddress)
+            val result = bluetoothPrinterService.printText(macAddress, "Test di stampa OK")
             result.fold(
                 onSuccess = { _printingState.value = PrintingUiState.Success },
                 onFailure = { _printingState.value = PrintingUiState.Error(it.message ?: "Errore di stampa sconosciuto") }

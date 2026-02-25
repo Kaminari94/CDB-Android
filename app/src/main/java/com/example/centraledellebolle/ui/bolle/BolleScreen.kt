@@ -21,10 +21,14 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,23 +48,44 @@ import java.time.format.DateTimeFormatter
 fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit) {
     val bolleState by vm.bolleState.collectAsState()
     val selectedDate by vm.selectedDate.collectAsState()
+    val printingState by vm.printingState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(modifier = Modifier.padding(16.dp)) {
-        DateSelector(date = selectedDate, onClick = { showDatePicker = true })
+    LaunchedEffect(printingState) {
+        when (val state = printingState) {
+            is PrintingUiState.Success -> {
+                snackbarHostState.showSnackbar("Stampa completata")
+                vm.resetPrintingState()
+            }
+            is PrintingUiState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+                vm.resetPrintingState()
+            }
+            else -> Unit
+        }
+    }
 
-        Spacer(modifier = Modifier.height(16.dp))
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
+        Column(modifier = Modifier.padding(it).padding(16.dp)) {
+            DateSelector(date = selectedDate, onClick = { showDatePicker = true })
 
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            when (val state = bolleState) {
-                is BolleUiState.Loading -> CircularProgressIndicator()
-                is BolleUiState.Success -> BolleList(bolle = state.bolle, onNavigateToDetail = onNavigateToDetail)
-                is BolleUiState.Empty -> Text("Nessuna bolla per questa data.")
-                is BolleUiState.Error -> Text(text = "Errore: ${state.message}")
-                is BolleUiState.Idle -> { /* Do nothing */ }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                when (val state = bolleState) {
+                    is BolleUiState.Loading -> CircularProgressIndicator()
+                    is BolleUiState.Success -> BolleList(
+                        bolle = state.bolle,
+                        onNavigateToDetail = onNavigateToDetail,
+                        onPrint = { bollaId -> vm.printBolla(bollaId) })
+                    is BolleUiState.Empty -> Text("Nessuna bolla per questa data.")
+                    is BolleUiState.Error -> Text(text = "Errore: ${state.message}")
+                    is BolleUiState.Idle -> { /* Do nothing */ }
+                }
             }
         }
     }
@@ -110,16 +135,16 @@ fun DateSelector(date: LocalDate, onClick: () -> Unit) {
 }
 
 @Composable
-fun BolleList(bolle: List<Bolla>, onNavigateToDetail: (Int) -> Unit) {
+fun BolleList(bolle: List<Bolla>, onNavigateToDetail: (Int) -> Unit, onPrint: (Int) -> Unit) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(bolle) { bolla ->
-            BollaItem(bolla = bolla, onNavigateToDetail = onNavigateToDetail)
+            BollaItem(bolla = bolla, onNavigateToDetail = onNavigateToDetail, onPrint = onPrint)
         }
     }
 }
 
 @Composable
-fun BollaItem(bolla: Bolla, onNavigateToDetail: (Int) -> Unit) {
+fun BollaItem(bolla: Bolla, onNavigateToDetail: (Int) -> Unit, onPrint: (Int) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
@@ -135,7 +160,7 @@ fun BollaItem(bolla: Bolla, onNavigateToDetail: (Int) -> Unit) {
                 TextButton(onClick = { onNavigateToDetail(bolla.id.toInt()) }) {
                     Text("Dettagli")
                 }
-                TextButton(onClick = { /* Handle print */ }) {
+                TextButton(onClick = { onPrint(bolla.id.toInt()) }) {
                     Text("Stampa")
                 }
                 TextButton(onClick = { /* Handle edit */ }) {

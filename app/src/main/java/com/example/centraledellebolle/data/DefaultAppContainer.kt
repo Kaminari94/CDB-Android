@@ -88,7 +88,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         get() = AuthRepository(apiService)
 
     override val bolleRepository: BolleRepository
-        get() = BolleRepository(apiService)
+        get() = BolleRepository(apiService, bluetoothPrinterService)
 
     override val quickBollaRepository: QuickBollaRepository
         get() = QuickBollaRepository(apiService)

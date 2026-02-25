@@ -9,3 +9,10 @@ sealed interface BolleUiState {
     data object Empty : BolleUiState
     data class Error(val message: String) : BolleUiState
 }
+
+sealed interface PrintingUiState {
+    data object Idle : PrintingUiState
+    data object Printing : PrintingUiState
+    data object Success : PrintingUiState
+    data class Error(val message: String) : PrintingUiState
+}

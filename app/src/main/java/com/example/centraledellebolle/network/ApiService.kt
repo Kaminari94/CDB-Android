@@ -5,6 +5,7 @@ import com.example.centraledellebolle.data.BolletteResponse
 import com.example.centraledellebolle.data.CustomersResponse
 import com.example.centraledellebolle.data.QuickBollaRequest
 import com.example.centraledellebolle.data.QuickBollaSuccessResponse
+import com.example.centraledellebolle.data.Receipt
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -44,4 +45,7 @@ interface ApiService {
 
     @GET("api/customers/")
     suspend fun getCustomers(): CustomersResponse
+
+    @GET("api/bolle/{id}/receipt/")
+    suspend fun getReceipt(@Path("id") id: Int): Receipt
 }

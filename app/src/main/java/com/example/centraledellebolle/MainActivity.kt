@@ -121,7 +121,7 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
 
     NavHost(navController = navController, startDestination = Screen.Bolle.route, modifier = modifier) {
         composable(Screen.Bolle.route) {
-            val vm: BolleViewModel = viewModel(factory = BolleViewModelFactory(appContainer.bolleRepository))
+            val vm: BolleViewModel = viewModel(factory = BolleViewModelFactory(appContainer.bolleRepository, appContainer.userPreferencesRepository))
             BolleScreen(vm = vm, onNavigateToDetail = { bollaId ->
                 navController.navigate("bolla_detail/$bollaId")
             })
@@ -132,7 +132,7 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
         ) {
             val bollaId = it.arguments?.getInt("bollaId") ?: 0
             val vm: BollaDetailViewModel = viewModel(
-                factory = BollaDetailViewModelFactory(appContainer.bolleRepository, bollaId)
+                factory = BollaDetailViewModelFactory(appContainer.bolleRepository, appContainer.userPreferencesRepository, bollaId)
             )
             BollaDetailScreen(vm = vm, onNavigateBack = { navController.popBackStack() })
         }
