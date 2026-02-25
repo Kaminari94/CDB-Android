@@ -3,10 +3,7 @@ package com.example.centraledellebolle
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -15,7 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,6 +44,9 @@ import com.example.centraledellebolle.ui.navigation.bottomNavItems
 import com.example.centraledellebolle.ui.quickbolla.QuickBollaScreen
 import com.example.centraledellebolle.ui.quickbolla.QuickBollaViewModel
 import com.example.centraledellebolle.ui.quickbolla.QuickBollaViewModelFactory
+import com.example.centraledellebolle.ui.settings.SettingsScreen
+import com.example.centraledellebolle.ui.settings.SettingsViewModel
+import com.example.centraledellebolle.ui.settings.SettingsViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -148,16 +147,15 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
             HealthScreen(vm = vm)
         }
         composable(Screen.Settings.route) {
-            SettingsScreen(onLogout = onLogout)
-        }
-    }
-}
-
-@Composable
-fun SettingsScreen(onLogout: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Button(onClick = onLogout) {
-            Text("Logout")
+            val vm: SettingsViewModel = viewModel(
+                factory = SettingsViewModelFactory(
+                    appContainer.userPreferencesRepository,
+                    appContainer.healthRepository,
+                    appContainer.baseUrlResolver,
+                    appContainer.bluetoothPrinterService
+                )
+            )
+            SettingsScreen(viewModel = vm, onLogout = onLogout)
         }
     }
 }

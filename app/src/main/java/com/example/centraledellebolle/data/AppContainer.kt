@@ -1,5 +1,8 @@
 package com.example.centraledellebolle.data
 
+import com.example.centraledellebolle.network.BaseUrlResolver
+import com.example.centraledellebolle.printing.BluetoothPrinterService
+
 interface AppContainer {
     val authRepository: AuthRepository
     val bolleRepository: BolleRepository
@@ -7,4 +10,7 @@ interface AppContainer {
     val customersRepository: CustomersRepository
     val healthRepository: HealthRepository
     val tokenStore: TokenStore
+    val userPreferencesRepository: UserPreferencesRepository
+    val baseUrlResolver: BaseUrlResolver
+    val bluetoothPrinterService: BluetoothPrinterService
 }
