@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +42,7 @@ import java.time.format.DateTimeFormatter
 fun BollaDetailScreen(vm: BollaDetailViewModel, onNavigateBack: () -> Unit) {
     val bollaDetailState by vm.bollaDetailState.collectAsState()
     val printingState by vm.printingState.collectAsState()
+    val deleteState by vm.deleteState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(printingState) {
@@ -57,9 +59,34 @@ fun BollaDetailScreen(vm: BollaDetailViewModel, onNavigateBack: () -> Unit) {
         }
     }
 
+    LaunchedEffect(deleteState) {
+        when (val state = deleteState) {
+            is DeleteUiState.Success -> {
+                snackbarHostState.showSnackbar("Bolla eliminata con successo")
+                vm.resetDeleteState()
+                onNavigateBack()
+            }
+            is DeleteUiState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+                vm.resetDeleteState()
+            }
+            else -> Unit
+        }
+    }
+
+    val isDeleting = deleteState is DeleteUiState.Deleting
+
+    if (deleteState is DeleteUiState.Request) {
+        DeleteConfirmationDialog(
+            onConfirm = { vm.confirmDelete() },
+            onDismiss = { vm.cancelDelete() },
+            isDeleting = isDeleting
+        )
+    }
+
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
         Column(modifier = Modifier.padding(it).padding(16.dp)) {
-            IconButton(onClick = onNavigateBack) {
+            IconButton(onClick = onNavigateBack, enabled = !isDeleting) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
             }
 
@@ -71,7 +98,9 @@ fun BollaDetailScreen(vm: BollaDetailViewModel, onNavigateBack: () -> Unit) {
                     is BollaDetailUiState.Loading -> CircularProgressIndicator()
                     is BollaDetailUiState.Success -> BollaDetailContent(
                         bolla = state.bolla,
-                        onPrint = { vm.printBolla() }
+                        onPrint = { vm.printBolla() },
+                        onDelete = { vm.requestDelete() },
+                        isDeleting = isDeleting
                     )
                     is BollaDetailUiState.Error -> Text(text = "Errore: ${state.message}")
                 }
@@ -81,7 +110,7 @@ fun BollaDetailScreen(vm: BollaDetailViewModel, onNavigateBack: () -> Unit) {
 }
 
 @Composable
-fun BollaDetailContent(bolla: BollaDetail, onPrint: () -> Unit) {
+fun BollaDetailContent(bolla: BollaDetail, onPrint: () -> Unit, onDelete: () -> Unit, isDeleting: Boolean) {
     Column {
         Text(text = bolla.clienteNome, style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(8.dp))
@@ -97,13 +126,13 @@ fun BollaDetailContent(bolla: BollaDetail, onPrint: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
-            TextButton(onClick = { /* Handle edit */ }) {
+            TextButton(onClick = { /* Handle edit */ }, enabled = !isDeleting) {
                 Text("Modifica")
             }
-            TextButton(onClick = onPrint) {
+            TextButton(onClick = onPrint, enabled = !isDeleting) {
                 Text("Stampa")
             }
-            TextButton(onClick = { /* Handle delete */ }) {
+            TextButton(onClick = onDelete, enabled = !isDeleting) {
                 Text("Elimina")
             }
         }
@@ -111,7 +140,35 @@ fun BollaDetailContent(bolla: BollaDetail, onPrint: () -> Unit) {
 }
 
 @Composable
+private fun DeleteConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    isDeleting: Boolean
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Eliminare la bolla?") },
+        text = { Text("Questa azione non può essere annullata.") },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isDeleting) {
+                if(isDeleting) {
+                    CircularProgressIndicator()
+                } else {
+                    Text("Elimina")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) {
+                Text("Annulla")
+            }
+        }
+    )
+}
+
+@Composable
 fun RigheTable(righe: List<Riga>) {
+    // Note: Consider making this a scrollable area if the number of rows can be large
     Column {
         // Header della tabella
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {

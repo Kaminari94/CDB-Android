@@ -8,7 +8,7 @@ import com.example.centraledellebolle.data.QuickBollaSuccessResponse
  */
 sealed interface QuickBollaUiState {
     /** Stato iniziale, nessuna operazione in corso. */
-    data object Idle : QuickBollaUiState
+    data class Idle(val previousInput: String = "") : QuickBollaUiState
 
     /** Creazione della bolla in corso. */
     data object Loading : QuickBollaUiState
@@ -18,6 +18,7 @@ sealed interface QuickBollaUiState {
 
     /** Errore durante la creazione. */
     data class Error(
+        val rawInput: String, // Conserva l'input originale che ha causato l'errore
         val validationError: QuickBollaErrorResponse? = null, // Errore strutturato dal backend (400)
         val genericMessage: String? = null // Messaggio per altri errori (rete, 500, etc.)
     ) : QuickBollaUiState

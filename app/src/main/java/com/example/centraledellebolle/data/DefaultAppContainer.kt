@@ -98,4 +98,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val healthRepository: HealthRepository
         get() = HealthRepository(apiService)
+
+    override val stockMoveRepository: StockMoveRepository
+        get() = StockMoveRepository(apiService)
 }

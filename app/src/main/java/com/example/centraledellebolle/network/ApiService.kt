@@ -6,8 +6,11 @@ import com.example.centraledellebolle.data.CustomersResponse
 import com.example.centraledellebolle.data.QuickBollaRequest
 import com.example.centraledellebolle.data.QuickBollaSuccessResponse
 import com.example.centraledellebolle.data.Receipt
+import com.example.centraledellebolle.data.StockMoveRequest
+import com.example.centraledellebolle.data.StockMoveResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
@@ -48,4 +51,10 @@ interface ApiService {
 
     @GET("api/bolle/{id}/receipt/")
     suspend fun getReceipt(@Path("id") id: Int): Receipt
+
+    @POST("api/movim/")
+    suspend fun performStockMove(@Body request: StockMoveRequest): Response<StockMoveResponse>
+
+    @DELETE("api/bolle/{id}/elimina/")
+    suspend fun deleteBolla(@Path("id") id: Int): Response<Unit>
 }

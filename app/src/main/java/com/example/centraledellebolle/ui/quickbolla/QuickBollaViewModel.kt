@@ -18,7 +18,7 @@ class QuickBollaViewModel(
 ) : ViewModel() {
 
     // Stato per la creazione della bolla
-    private val _creationState = MutableStateFlow<QuickBollaUiState>(QuickBollaUiState.Idle)
+    private val _creationState = MutableStateFlow<QuickBollaUiState>(QuickBollaUiState.Idle())
     val creationState: StateFlow<QuickBollaUiState> = _creationState.asStateFlow()
 
     // Stato per il caricamento dei clienti
@@ -67,10 +67,16 @@ class QuickBollaViewModel(
                 onFailure = { exception ->
                     when (exception) {
                         is QuickBollaValidationException -> {
-                            QuickBollaUiState.Error(validationError = exception.errorResponse)
+                            QuickBollaUiState.Error(
+                                rawInput = rawLines,
+                                validationError = exception.errorResponse
+                            )
                         }
                         else -> {
-                            QuickBollaUiState.Error(genericMessage = exception.message ?: "Errore sconosciuto")
+                            QuickBollaUiState.Error(
+                                rawInput = rawLines,
+                                genericMessage = exception.message ?: "Errore sconosciuto"
+                            )
                         }
                     }
                 }
@@ -80,7 +86,12 @@ class QuickBollaViewModel(
 
     /** Resetta lo stato della creazione per permettere di creare una nuova bolla. */
     fun reset() {
-        _creationState.value = QuickBollaUiState.Idle
+        val currentState = _creationState.value
+        if (currentState is QuickBollaUiState.Error) {
+            _creationState.value = QuickBollaUiState.Idle(previousInput = currentState.rawInput)
+        } else {
+            _creationState.value = QuickBollaUiState.Idle()
+        }
     }
 }
 

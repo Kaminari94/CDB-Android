@@ -21,6 +21,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,9 +40,25 @@ fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
     val creationState by vm.creationState.collectAsState()
     var rawLines by remember { mutableStateOf("") }
 
-    // Resetta il campo delle righe quando la bolla viene creata con successo
-    if (creationState is QuickBollaUiState.Success) {
-        rawLines = ""
+    // Sincronizza il testo locale con lo stato del ViewModel
+    LaunchedEffect(creationState) {
+        when (val state = creationState) {
+            is QuickBollaUiState.Idle -> {
+                // Se c'è un input precedente, usalo
+                if (state.previousInput.isNotEmpty()) {
+                    rawLines = state.previousInput
+                }
+            }
+            is QuickBollaUiState.Error -> {
+                // In caso di errore, mantieni il testo che l'ha causato
+                rawLines = state.rawInput
+            }
+            is QuickBollaUiState.Success -> {
+                // Svuota il campo solo dopo un successo
+                rawLines = ""
+            }
+            else -> Unit
+        }
     }
 
     Column(
@@ -83,7 +100,7 @@ fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
                     SuccessView(vm = vm, bollaId = state.response.bolla_id, onNavigate = onBollaCreated)
                 }
                 is QuickBollaUiState.Error -> {
-                    ErrorView(state) { vm.createBolla(rawLines) }
+                    ErrorView(state) { vm.reset() }
                 }
                 is QuickBollaUiState.Idle -> {
                     Text("Pronto per creare una nuova bolla.", style = MaterialTheme.typography.bodySmall)
@@ -172,7 +189,7 @@ private fun SuccessView(vm: QuickBollaViewModel, bollaId: Int, onNavigate: () ->
 }
 
 @Composable
-private fun ErrorView(state: QuickBollaUiState.Error, onRetry: () -> Unit) {
+private fun ErrorView(state: QuickBollaUiState.Error, onDismiss: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Errore", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(8.dp))
@@ -191,8 +208,8 @@ private fun ErrorView(state: QuickBollaUiState.Error, onRetry: () -> Unit) {
         }
 
         Spacer(Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Riprova")
+        Button(onClick = onDismiss) {
+            Text("OK")
         }
     }
 }

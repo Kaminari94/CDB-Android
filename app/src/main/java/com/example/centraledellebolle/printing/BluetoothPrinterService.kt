@@ -57,8 +57,30 @@ class BluetoothPrinterService(private val context: Context) {
             val commandList = mutableListOf<Byte>()
             // Initialize printer
             commandList.addAll(byteArrayOf(0x1B, 0x40).toList())
-            // Text
-            commandList.addAll(text.toByteArray(Charsets.UTF_8).toList())
+
+            // Handle bold tags
+            val boldOn = byteArrayOf(0x1B, 0x45, 0x01)
+            val boldOff = byteArrayOf(0x1B, 0x45, 0x00)
+
+            var lastIndex = 0
+            val regex = Regex("(?i)\\[/?b\\]")
+            regex.findAll(text).forEach { match ->
+                val plainText = text.substring(lastIndex, match.range.first)
+                commandList.addAll(plainText.toByteArray(Charsets.UTF_8).toList())
+
+                if (match.value.equals("[b]", ignoreCase = true)) {
+                    commandList.addAll(boldOn.toList())
+                } else { // It's [/b]
+                    commandList.addAll(boldOff.toList())
+                }
+                lastIndex = match.range.last + 1
+            }
+            // Add remaining text if any
+            if (lastIndex < text.length) {
+                val remainingText = text.substring(lastIndex)
+                commandList.addAll(remainingText.toByteArray(Charsets.UTF_8).toList())
+            }
+
             // Newline
             commandList.addAll("\n".toByteArray().toList())
             // Feed 3 lines

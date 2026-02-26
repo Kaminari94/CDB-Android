@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
@@ -49,6 +50,8 @@ fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit) {
     val bolleState by vm.bolleState.collectAsState()
     val selectedDate by vm.selectedDate.collectAsState()
     val printingState by vm.printingState.collectAsState()
+    val deleteState by vm.deleteState.collectAsState()
+
     var showDatePicker by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -66,6 +69,30 @@ fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit) {
         }
     }
 
+    LaunchedEffect(deleteState) {
+        when (val state = deleteState) {
+            is DeleteUiState.Success -> {
+                snackbarHostState.showSnackbar("Bolla eliminata con successo")
+                vm.resetDeleteState()
+            }
+            is DeleteUiState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+                vm.resetDeleteState()
+            }
+            else -> Unit
+        }
+    }
+
+    val isDeleting = deleteState is DeleteUiState.Deleting
+
+    if (deleteState is DeleteUiState.Request) {
+        DeleteConfirmationDialog(
+            onConfirm = { vm.confirmDelete() },
+            onDismiss = { vm.cancelDelete() },
+            isDeleting = isDeleting
+        )
+    }
+
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
         Column(modifier = Modifier.padding(it).padding(16.dp)) {
             DateSelector(date = selectedDate, onClick = { showDatePicker = true })
@@ -81,7 +108,10 @@ fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit) {
                     is BolleUiState.Success -> BolleList(
                         bolle = state.bolle,
                         onNavigateToDetail = onNavigateToDetail,
-                        onPrint = { bollaId -> vm.printBolla(bollaId) })
+                        onPrint = { bollaId -> vm.printBolla(bollaId) },
+                        onDelete = { bollaId -> vm.requestDelete(bollaId) },
+                        isDeleting = isDeleting
+                    )
                     is BolleUiState.Empty -> Text("Nessuna bolla per questa data.")
                     is BolleUiState.Error -> Text(text = "Errore: ${state.message}")
                     is BolleUiState.Idle -> { /* Do nothing */ }
@@ -119,6 +149,34 @@ fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit) {
 }
 
 @Composable
+private fun DeleteConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    isDeleting: Boolean
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Eliminare la bolla?") },
+        text = { Text("Questa azione non può essere annullata.") },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isDeleting) {
+                if(isDeleting) {
+                    CircularProgressIndicator()
+                } else {
+                    Text("Elimina")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) {
+                Text("Annulla")
+            }
+        }
+    )
+}
+
+
+@Composable
 fun DateSelector(date: LocalDate, onClick: () -> Unit) {
     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
     Row(
@@ -135,16 +193,34 @@ fun DateSelector(date: LocalDate, onClick: () -> Unit) {
 }
 
 @Composable
-fun BolleList(bolle: List<Bolla>, onNavigateToDetail: (Int) -> Unit, onPrint: (Int) -> Unit) {
+fun BolleList(
+    bolle: List<Bolla>,
+    onNavigateToDetail: (Int) -> Unit,
+    onPrint: (Int) -> Unit,
+    onDelete: (Int) -> Unit,
+    isDeleting: Boolean
+) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(bolle) { bolla ->
-            BollaItem(bolla = bolla, onNavigateToDetail = onNavigateToDetail, onPrint = onPrint)
+            BollaItem(
+                bolla = bolla,
+                onNavigateToDetail = onNavigateToDetail,
+                onPrint = onPrint,
+                onDelete = onDelete,
+                isDeleting = isDeleting
+            )
         }
     }
 }
 
 @Composable
-fun BollaItem(bolla: Bolla, onNavigateToDetail: (Int) -> Unit, onPrint: (Int) -> Unit) {
+fun BollaItem(
+    bolla: Bolla,
+    onNavigateToDetail: (Int) -> Unit,
+    onPrint: (Int) -> Unit,
+    onDelete: (Int) -> Unit,
+    isDeleting: Boolean
+) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
@@ -157,16 +233,16 @@ fun BollaItem(bolla: Bolla, onNavigateToDetail: (Int) -> Unit, onPrint: (Int) ->
             Text(text = "Data: ${formatDate(bolla.data)}", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Documento: ${bolla.tipoDocumentoNome} n. ${bolla.numero}", style = MaterialTheme.typography.bodyMedium)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = { onNavigateToDetail(bolla.id.toInt()) }) {
+                TextButton(onClick = { onNavigateToDetail(bolla.id.toInt()) }, enabled = !isDeleting) {
                     Text("Dettagli")
                 }
-                TextButton(onClick = { onPrint(bolla.id.toInt()) }) {
+                TextButton(onClick = { onPrint(bolla.id.toInt()) }, enabled = !isDeleting) {
                     Text("Stampa")
                 }
-                TextButton(onClick = { /* Handle edit */ }) {
+                TextButton(onClick = { /* Handle edit */ }, enabled = !isDeleting) {
                     Text("Modifica")
                 }
-                TextButton(onClick = { /* Handle delete */ }) {
+                TextButton(onClick = { onDelete(bolla.id.toInt()) }, enabled = !isDeleting) {
                     Text("Elimina")
                 }
             }

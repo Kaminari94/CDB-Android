@@ -7,6 +7,7 @@ import com.example.centraledellebolle.data.BolleRepository
 import com.example.centraledellebolle.data.UserPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -17,10 +18,13 @@ class BollaDetailViewModel(
 ) : ViewModel() {
 
     private val _bollaDetailState = MutableStateFlow<BollaDetailUiState>(BollaDetailUiState.Loading)
-    val bollaDetailState: StateFlow<BollaDetailUiState> = _bollaDetailState
+    val bollaDetailState: StateFlow<BollaDetailUiState> = _bollaDetailState.asStateFlow()
 
     private val _printingState = MutableStateFlow<PrintingUiState>(PrintingUiState.Idle)
-    val printingState: StateFlow<PrintingUiState> = _printingState
+    val printingState: StateFlow<PrintingUiState> = _printingState.asStateFlow()
+
+    private val _deleteState = MutableStateFlow<DeleteUiState>(DeleteUiState.Idle)
+    val deleteState: StateFlow<DeleteUiState> = _deleteState.asStateFlow()
 
     init {
         loadBollaDetail()
@@ -57,6 +61,33 @@ class BollaDetailViewModel(
 
     fun resetPrintingState() {
         _printingState.value = PrintingUiState.Idle
+    }
+
+    fun requestDelete() {
+        _deleteState.value = DeleteUiState.Request(bollaId)
+    }
+
+    fun confirmDelete() {
+        viewModelScope.launch {
+            _deleteState.value = DeleteUiState.Deleting
+            val result = bolleRepository.deleteBolla(bollaId)
+            result.fold(
+                onSuccess = {
+                    _deleteState.value = DeleteUiState.Success
+                },
+                onFailure = {
+                    _deleteState.value = DeleteUiState.Error(it.message ?: "Errore sconosciuto")
+                }
+            )
+        }
+    }
+
+    fun cancelDelete() {
+        _deleteState.value = DeleteUiState.Idle
+    }
+
+    fun resetDeleteState() {
+        _deleteState.value = DeleteUiState.Idle
     }
 }
 

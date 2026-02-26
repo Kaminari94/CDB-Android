@@ -33,9 +33,6 @@ import com.example.centraledellebolle.ui.bolle.BollaDetailViewModelFactory
 import com.example.centraledellebolle.ui.bolle.BolleScreen
 import com.example.centraledellebolle.ui.bolle.BolleViewModel
 import com.example.centraledellebolle.ui.bolle.BolleViewModelFactory
-import com.example.centraledellebolle.ui.health.HealthScreen
-import com.example.centraledellebolle.ui.health.HealthViewModel
-import com.example.centraledellebolle.ui.health.HealthViewModelFactory
 import com.example.centraledellebolle.ui.login.LoginScreen
 import com.example.centraledellebolle.ui.login.LoginViewModel
 import com.example.centraledellebolle.ui.login.LoginViewModelFactory
@@ -47,6 +44,9 @@ import com.example.centraledellebolle.ui.quickbolla.QuickBollaViewModelFactory
 import com.example.centraledellebolle.ui.settings.SettingsScreen
 import com.example.centraledellebolle.ui.settings.SettingsViewModel
 import com.example.centraledellebolle.ui.settings.SettingsViewModelFactory
+import com.example.centraledellebolle.ui.stockmove.StockMoveScreen
+import com.example.centraledellebolle.ui.stockmove.StockMoveViewModel
+import com.example.centraledellebolle.ui.stockmove.StockMoveViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -142,9 +142,9 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
             )
             QuickBollaScreen(vm = vm, onBollaCreated = { navController.navigate(Screen.Bolle.route) })
         }
-        composable(Screen.Health.route) {
-            val vm: HealthViewModel = viewModel(factory = HealthViewModelFactory(appContainer.healthRepository))
-            HealthScreen(vm = vm)
+        composable(Screen.StockMove.route) {
+            val vm: StockMoveViewModel = viewModel(factory = StockMoveViewModelFactory(appContainer.stockMoveRepository))
+            StockMoveScreen(vm = vm)
         }
         composable(Screen.Settings.route) {
             val vm: SettingsViewModel = viewModel(

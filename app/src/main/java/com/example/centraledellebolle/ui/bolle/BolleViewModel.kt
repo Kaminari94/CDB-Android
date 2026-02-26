@@ -6,6 +6,7 @@ import com.example.centraledellebolle.data.BolleRepository
 import com.example.centraledellebolle.data.UserPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -17,13 +18,16 @@ class BolleViewModel(
 ) : ViewModel() {
 
     private val _bolleState = MutableStateFlow<BolleUiState>(BolleUiState.Idle)
-    val bolleState: StateFlow<BolleUiState> = _bolleState
+    val bolleState: StateFlow<BolleUiState> = _bolleState.asStateFlow()
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())
-    val selectedDate: StateFlow<LocalDate> = _selectedDate
+    val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
 
     private val _printingState = MutableStateFlow<PrintingUiState>(PrintingUiState.Idle)
-    val printingState: StateFlow<PrintingUiState> = _printingState
+    val printingState: StateFlow<PrintingUiState> = _printingState.asStateFlow()
+
+    private val _deleteState = MutableStateFlow<DeleteUiState>(DeleteUiState.Idle)
+    val deleteState: StateFlow<DeleteUiState> = _deleteState.asStateFlow()
 
     init {
         loadBolleForDate(LocalDate.now())
@@ -72,5 +76,37 @@ class BolleViewModel(
 
     fun resetPrintingState() {
         _printingState.value = PrintingUiState.Idle
+    }
+
+    fun requestDelete(id: Int) {
+        _deleteState.value = DeleteUiState.Request(id)
+    }
+
+    fun confirmDelete() {
+        val currentState = _deleteState.value
+        if (currentState is DeleteUiState.Request) {
+            viewModelScope.launch {
+                _deleteState.value = DeleteUiState.Deleting
+                val result = bolleRepository.deleteBolla(currentState.bollaId)
+                result.fold(
+                    onSuccess = {
+                        _deleteState.value = DeleteUiState.Success
+                        // Refresh the list
+                        loadBolleForDate(selectedDate.value)
+                    },
+                    onFailure = {
+                        _deleteState.value = DeleteUiState.Error(it.message ?: "Errore sconosciuto")
+                    }
+                )
+            }
+        }
+    }
+
+    fun cancelDelete() {
+        _deleteState.value = DeleteUiState.Idle
+    }
+
+    fun resetDeleteState() {
+        _deleteState.value = DeleteUiState.Idle
     }
 }
