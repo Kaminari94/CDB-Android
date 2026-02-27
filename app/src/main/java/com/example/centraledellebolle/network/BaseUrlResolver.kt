@@ -14,7 +14,7 @@ class BaseUrlResolver(
         networkMonitor.isWifi
     ) { wifiUrl, fallbackUrl, isWifi ->
         if (isWifi) {
-            if (wifiUrl.isNullOrBlank()) "http://192.168.1.166:8000/" else wifiUrl
+            if (wifiUrl.isNullOrBlank()) "https://192.168.1.176/" else wifiUrl
         } else {
             if (fallbackUrl.isNullOrBlank()) "https://centralebolle.duckdns.org/" else fallbackUrl
         }

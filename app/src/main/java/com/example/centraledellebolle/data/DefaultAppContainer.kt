@@ -72,6 +72,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         val authInterceptor = AuthInterceptor(tokenStore)
 
         val client = OkHttpClient.Builder()
+            .hostnameVerifier { _, _ -> true } // Accetta qualsiasi nome host
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
             .build()
