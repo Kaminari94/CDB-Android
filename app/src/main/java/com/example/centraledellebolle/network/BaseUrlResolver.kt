@@ -16,7 +16,7 @@ class BaseUrlResolver(
         if (isWifi) {
             if (wifiUrl.isNullOrBlank()) "http://192.168.1.166:8000/" else wifiUrl
         } else {
-            if (fallbackUrl.isNullOrBlank()) "https://62.170.35.226/" else fallbackUrl
+            if (fallbackUrl.isNullOrBlank()) "https://centralebolle.duckdns.org/" else fallbackUrl
         }
     }
 }
