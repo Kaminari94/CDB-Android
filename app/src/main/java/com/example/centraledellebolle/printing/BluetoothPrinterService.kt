@@ -31,21 +31,21 @@ class BluetoothPrinterService(private val context: Context) {
     suspend fun printText(macAddress: String, text: String): Result<Unit> = withContext(Dispatchers.IO) {
         val adapter = bluetoothAdapter
         if (adapter == null) {
-            return@withContext Result.failure(Exception("Bluetooth not supported on this device."))
+            return@withContext Result.failure(Exception("Bluetooth non supportato su questo dispositivo."))
         }
 
         if (!adapter.isEnabled) {
-            return@withContext Result.failure(Exception("Bluetooth is not enabled."))
+            return@withContext Result.failure(Exception("Bluetooth non abilitato."))
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            return@withContext Result.failure(Exception("Bluetooth connect permission not granted."))
+            return@withContext Result.failure(Exception("Permessi per la connessione Bluetooth mancanti."))
         }
 
         val device = try {
             adapter.getRemoteDevice(macAddress)
         } catch (e: IllegalArgumentException) {
-            return@withContext Result.failure(Exception("Invalid MAC address."))
+            return@withContext Result.failure(Exception("MAC Address sbagliato."))
         }
 
         var socket: BluetoothSocket? = null
@@ -99,7 +99,7 @@ class BluetoothPrinterService(private val context: Context) {
                 delay(20)
                 offset += size
             }
-            val extraWaitMs = 1200 + (commandBytes.size / 4) // ~250ms ogni KB
+            val extraWaitMs = 2500 + (commandBytes.size / 4) // ~250ms ogni KB
             delay(extraWaitMs.toLong())
 
             Result.success(Unit)
