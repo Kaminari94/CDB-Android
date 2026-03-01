@@ -46,7 +46,7 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit) {
+fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit, onNavigateToEdit: (Int) -> Unit) {
     val bolleState by vm.bolleState.collectAsState()
     val selectedDate by vm.selectedDate.collectAsState()
     val printingState by vm.printingState.collectAsState()
@@ -108,6 +108,7 @@ fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit) {
                     is BolleUiState.Success -> BolleList(
                         bolle = state.bolle,
                         onNavigateToDetail = onNavigateToDetail,
+                        onNavigateToEdit = onNavigateToEdit,
                         onPrint = { bollaId -> vm.printBolla(bollaId) },
                         onDelete = { bollaId -> vm.requestDelete(bollaId) },
                         isDeleting = isDeleting
@@ -196,6 +197,7 @@ fun DateSelector(date: LocalDate, onClick: () -> Unit) {
 fun BolleList(
     bolle: List<Bolla>,
     onNavigateToDetail: (Int) -> Unit,
+    onNavigateToEdit: (Int) -> Unit,
     onPrint: (Int) -> Unit,
     onDelete: (Int) -> Unit,
     isDeleting: Boolean
@@ -205,6 +207,7 @@ fun BolleList(
             BollaItem(
                 bolla = bolla,
                 onNavigateToDetail = onNavigateToDetail,
+                onNavigateToEdit = onNavigateToEdit,
                 onPrint = onPrint,
                 onDelete = onDelete,
                 isDeleting = isDeleting
@@ -217,6 +220,7 @@ fun BolleList(
 fun BollaItem(
     bolla: Bolla,
     onNavigateToDetail: (Int) -> Unit,
+    onNavigateToEdit: (Int) -> Unit,
     onPrint: (Int) -> Unit,
     onDelete: (Int) -> Unit,
     isDeleting: Boolean
@@ -239,7 +243,7 @@ fun BollaItem(
                 TextButton(onClick = { onPrint(bolla.id.toInt()) }, enabled = !isDeleting) {
                     Text("Stampa")
                 }
-                TextButton(onClick = { /* Handle edit */ }, enabled = !isDeleting) {
+                TextButton(onClick = { onNavigateToEdit(bolla.id.toInt()) }, enabled = !isDeleting) {
                     Text("Modifica")
                 }
                 TextButton(onClick = { onDelete(bolla.id.toInt()) }, enabled = !isDeleting) {

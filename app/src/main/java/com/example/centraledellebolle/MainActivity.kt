@@ -30,6 +30,9 @@ import com.example.centraledellebolle.ui.MainViewModelFactory
 import com.example.centraledellebolle.ui.bolle.BollaDetailScreen
 import com.example.centraledellebolle.ui.bolle.BollaDetailViewModel
 import com.example.centraledellebolle.ui.bolle.BollaDetailViewModelFactory
+import com.example.centraledellebolle.ui.bolle.BollaEditScreen
+import com.example.centraledellebolle.ui.bolle.BollaEditViewModel
+import com.example.centraledellebolle.ui.bolle.BollaEditViewModelFactory
 import com.example.centraledellebolle.ui.bolle.BolleScreen
 import com.example.centraledellebolle.ui.bolle.BolleViewModel
 import com.example.centraledellebolle.ui.bolle.BolleViewModelFactory
@@ -124,6 +127,8 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
             val vm: BolleViewModel = viewModel(factory = BolleViewModelFactory(appContainer.bolleRepository, appContainer.userPreferencesRepository))
             BolleScreen(vm = vm, onNavigateToDetail = { bollaId ->
                 navController.navigate("bolla_detail/$bollaId")
+            }, onNavigateToEdit = { bollaId ->
+                navController.navigate("bolla_edit/$bollaId")
             })
         }
         composable(
@@ -134,7 +139,29 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
             val vm: BollaDetailViewModel = viewModel(
                 factory = BollaDetailViewModelFactory(appContainer.bolleRepository, appContainer.userPreferencesRepository, bollaId)
             )
-            BollaDetailScreen(vm = vm, onNavigateBack = { navController.popBackStack() })
+            val shouldRefresh = navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.get<Boolean>("refresh") ?: false
+            if (shouldRefresh) {
+                vm.loadBollaDetail()
+                navController.currentBackStackEntry?.savedStateHandle?.set("refresh", false)
+            }
+
+            BollaDetailScreen(vm = vm, onNavigateBack = { navController.popBackStack() }, navController = navController)
+        }
+        composable(
+            route = "bolla_edit/{bollaId}",
+            arguments = listOf(navArgument("bollaId") { type = NavType.IntType })
+        ) {
+            val bollaId = it.arguments?.getInt("bollaId") ?: 0
+            val vm: BollaEditViewModel = viewModel(factory = BollaEditViewModelFactory(appContainer.bolleRepository))
+            BollaEditScreen(
+                vm = vm, bollaId = bollaId, onNavigateBack = { navController.popBackStack() },
+                onSaved = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navController.popBackStack()
+                }
+            )
         }
         composable(Screen.QuickBolla.route) {
             val vm: QuickBollaViewModel = viewModel(

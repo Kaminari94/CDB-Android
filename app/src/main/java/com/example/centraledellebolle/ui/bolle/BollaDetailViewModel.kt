@@ -30,7 +30,7 @@ class BollaDetailViewModel(
         loadBollaDetail()
     }
 
-    private fun loadBollaDetail() {
+    fun loadBollaDetail() {
         viewModelScope.launch {
             _bollaDetailState.value = BollaDetailUiState.Loading
             val result = bolleRepository.getBollaDetail(bollaId)

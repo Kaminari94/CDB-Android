@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,6 +19,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -30,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.centraledellebolle.data.Customer
 import com.example.centraledellebolle.data.QuickLineError
@@ -61,62 +64,73 @@ fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // -- Sezione Input --
-        if (creationState !is QuickBollaUiState.Success) {
-            Column(modifier = Modifier.weight(1f)) {
-
-                CustomerSelector(vm)
-
-                Spacer(Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = rawLines,
-                    onValueChange = { rawLines = it },
-                    label = { Text("Righe (CODICE QUANTITÀ)") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    placeholder = { Text("128 2\nPROVA 10\n...") },
-                    enabled = creationState !is QuickBollaUiState.Loading
-                )
-            }
-        }
-
-        // -- Sezione Risultato/Stato --
-        Box(
+    Scaffold { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
         ) {
-            when (val state = creationState) {
-                is QuickBollaUiState.Loading -> CircularProgressIndicator()
-                is QuickBollaUiState.Success -> {
-                    SuccessView(vm = vm, bollaId = state.response.bolla_id, onNavigate = onBollaCreated)
-                }
-                is QuickBollaUiState.Error -> {
-                    ErrorView(state) { vm.reset() }
-                }
-                is QuickBollaUiState.Idle -> {
-                    Text("Pronto per creare una nuova bolla.", style = MaterialTheme.typography.bodySmall)
+            // -- Sezione Input --
+            if (creationState !is QuickBollaUiState.Success) {
+                Column(modifier = Modifier.weight(1f)) {
+
+                    CustomerSelector(vm)
+
+                    Spacer(Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = rawLines,
+                        onValueChange = { rawLines = it },
+                        label = { Text("Righe (CODICE QUANTITÀ)") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        placeholder = { Text("Esempio di testo da scrivere qui:\n128 2\n122 2\n125 50\n...") },
+                        enabled = creationState !is QuickBollaUiState.Loading,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
                 }
             }
-        }
 
-        // -- Bottone sticky in basso --
-        if (creationState !is QuickBollaUiState.Success) {
-            val selectedCustomer by vm.selectedCustomer.collectAsState()
-            Button(
-                onClick = { vm.createBolla(rawLines) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = selectedCustomer != null && rawLines.isNotBlank() && creationState !is QuickBollaUiState.Loading
+            // -- Sezione Risultato/Stato --
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Text("CREA BOLLA")
+                when (val state = creationState) {
+                    is QuickBollaUiState.Loading -> CircularProgressIndicator()
+                    is QuickBollaUiState.Success -> {
+                        SuccessView(
+                            vm = vm,
+                            bollaId = state.response.bolla_id,
+                            onNavigate = onBollaCreated
+                        )
+                    }
+                    is QuickBollaUiState.Error -> {
+                        ErrorView(state) { vm.reset() }
+                    }
+                    is QuickBollaUiState.Idle -> {
+                        Text(
+                            "Pronto per creare una nuova bolla.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+
+            // -- Bottone sticky in basso --
+            if (creationState !is QuickBollaUiState.Success) {
+                val selectedCustomer by vm.selectedCustomer.collectAsState()
+                Button(
+                    onClick = { vm.createBolla(rawLines) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = selectedCustomer != null && rawLines.isNotBlank() && creationState !is QuickBollaUiState.Loading
+                ) {
+                    Text("CREA BOLLA")
+                }
             }
         }
     }
@@ -142,7 +156,9 @@ private fun CustomerSelector(vm: QuickBollaViewModel) {
                         readOnly = true,
                         label = { Text("Cliente") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
                     )
 
                     ExposedDropdownMenu(
@@ -175,8 +191,16 @@ private fun CustomerSelector(vm: QuickBollaViewModel) {
 
 @Composable
 private fun SuccessView(vm: QuickBollaViewModel, bollaId: Int, onNavigate: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
-        Text("Successo!", style = MaterialTheme.typography.headlineMedium, color = Color(0xFF00C853))
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(
+            "Successo!",
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color(0xFF00C853)
+        )
         Text("Creata bolla con ID: $bollaId")
         Spacer(Modifier.height(16.dp))
         Button(onClick = {
@@ -191,7 +215,11 @@ private fun SuccessView(vm: QuickBollaViewModel, bollaId: Int, onNavigate: () ->
 @Composable
 private fun ErrorView(state: QuickBollaUiState.Error, onDismiss: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Errore", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.error)
+        Text(
+            "Errore",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.error
+        )
         Spacer(Modifier.height(8.dp))
 
         state.validationError?.errors?.let {
@@ -204,7 +232,11 @@ private fun ErrorView(state: QuickBollaUiState.Error, onDismiss: () -> Unit) {
         }
 
         state.genericMessage?.let {
-            Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+            Text(
+                it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error
+            )
         }
 
         Spacer(Modifier.height(16.dp))
@@ -217,7 +249,11 @@ private fun ErrorView(state: QuickBollaUiState.Error, onDismiss: () -> Unit) {
 @Composable
 private fun ErrorRow(error: QuickLineError) {
     Row(modifier = Modifier.padding(vertical = 4.dp)) {
-        Text("Riga ${error.line}:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        Text(
+            "Riga ${error.line}:",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error
+        )
         Spacer(Modifier.height(8.dp))
         Text(error.message, style = MaterialTheme.typography.bodyMedium)
     }

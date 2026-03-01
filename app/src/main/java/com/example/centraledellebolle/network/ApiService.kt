@@ -5,6 +5,7 @@ import com.example.centraledellebolle.data.BolletteResponse
 import com.example.centraledellebolle.data.CustomersResponse
 import com.example.centraledellebolle.data.QuickBollaRequest
 import com.example.centraledellebolle.data.QuickBollaSuccessResponse
+import com.example.centraledellebolle.data.QuickLineError
 import com.example.centraledellebolle.data.Receipt
 import com.example.centraledellebolle.data.StockMoveRequest
 import com.example.centraledellebolle.data.StockMoveResponse
@@ -29,6 +30,10 @@ data class LoginResponse(
     val access: String,
     val refresh: String
 )
+
+data class UpdateBollaRigheRequest(val raw_lines: String)
+data class UpdateBollaRigheResponse(val type: String, val bolla_id: Int, val rows_count: Int)
+data class UpdateBollaRigheErrorResponse(val errors: List<QuickLineError>?, val detail: String?)
 
 interface ApiService {
     @GET("api/health/")
@@ -57,4 +62,10 @@ interface ApiService {
 
     @DELETE("api/bolle/{id}/elimina/")
     suspend fun deleteBolla(@Path("id") id: Int): Response<Unit>
+
+    @POST("api/bolle/{id}/modifica/")
+    suspend fun updateBollaRighe(
+        @Path("id") id: Int,
+        @Body body: UpdateBollaRigheRequest
+    ): UpdateBollaRigheResponse
 }

@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.centraledellebolle.data.BollaDetail
 import com.example.centraledellebolle.data.Riga
 import java.time.Instant
@@ -39,7 +40,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun BollaDetailScreen(vm: BollaDetailViewModel, onNavigateBack: () -> Unit) {
+fun BollaDetailScreen(
+    vm: BollaDetailViewModel,
+    onNavigateBack: () -> Unit,
+    navController: NavController
+) {
     val bollaDetailState by vm.bollaDetailState.collectAsState()
     val printingState by vm.printingState.collectAsState()
     val deleteState by vm.deleteState.collectAsState()
@@ -84,8 +89,8 @@ fun BollaDetailScreen(vm: BollaDetailViewModel, onNavigateBack: () -> Unit) {
         )
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
-        Column(modifier = Modifier.padding(it).padding(16.dp)) {
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
+        Column(modifier = Modifier.padding(paddingValues).padding(16.dp)) {
             IconButton(onClick = onNavigateBack, enabled = !isDeleting) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
             }
@@ -100,7 +105,8 @@ fun BollaDetailScreen(vm: BollaDetailViewModel, onNavigateBack: () -> Unit) {
                         bolla = state.bolla,
                         onPrint = { vm.printBolla() },
                         onDelete = { vm.requestDelete() },
-                        isDeleting = isDeleting
+                        isDeleting = isDeleting,
+                        onEdit = { navController.navigate("bolla_edit/${state.bolla.id}") }
                     )
                     is BollaDetailUiState.Error -> Text(text = "Errore: ${state.message}")
                 }
@@ -110,8 +116,14 @@ fun BollaDetailScreen(vm: BollaDetailViewModel, onNavigateBack: () -> Unit) {
 }
 
 @Composable
-fun BollaDetailContent(bolla: BollaDetail, onPrint: () -> Unit, onDelete: () -> Unit, isDeleting: Boolean) {
-    Column {
+fun BollaDetailContent(
+    bolla: BollaDetail,
+    onPrint: () -> Unit,
+    onDelete: () -> Unit,
+    isDeleting: Boolean,
+    onEdit: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) { // Make the column fill the screen
         Text(text = bolla.clienteNome, style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = "Data: ${formatDate(bolla.data)}", style = MaterialTheme.typography.bodyMedium)
@@ -120,13 +132,38 @@ fun BollaDetailContent(bolla: BollaDetail, onPrint: () -> Unit, onDelete: () -> 
             style = MaterialTheme.typography.bodyMedium
         )
         Spacer(modifier = Modifier.height(16.dp))
-        RigheTable(righe = bolla.righe)
+
+        // Table Header
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+            Text("Codice", modifier = Modifier.weight(0.2f), fontWeight = FontWeight.Bold)
+            Text("Descrizione", modifier = Modifier.weight(0.6f), fontWeight = FontWeight.Bold)
+            Text("Quantità", modifier = Modifier.weight(0.2f), fontWeight = FontWeight.Bold)
+        }
+
+        // Table Rows - this will now be scrollable and take up the available space
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            items(bolla.righe) { riga ->
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Text(riga.codice, modifier = Modifier.weight(0.2f))
+                    Column(modifier = Modifier.weight(0.6f)) {
+                        Text(riga.descrizione)
+                        riga.lotto?.let {
+                            Text("Lotto: $it", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    Text(riga.quantita, modifier = Modifier.weight(0.2f))
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Action Buttons - these will be pushed to the bottom
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
-            TextButton(onClick = { /* Handle edit */ }, enabled = !isDeleting) {
+            TextButton(onClick = onEdit, enabled = !isDeleting) {
                 Text("Modifica")
             }
             TextButton(onClick = onPrint, enabled = !isDeleting) {
@@ -164,34 +201,6 @@ private fun DeleteConfirmationDialog(
             }
         }
     )
-}
-
-@Composable
-fun RigheTable(righe: List<Riga>) {
-    // Note: Consider making this a scrollable area if the number of rows can be large
-    Column {
-        // Header della tabella
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            Text("Codice", modifier = Modifier.weight(0.2f), fontWeight = FontWeight.Bold)
-            Text("Descrizione", modifier = Modifier.weight(0.6f), fontWeight = FontWeight.Bold)
-            Text("Quantità", modifier = Modifier.weight(0.2f), fontWeight = FontWeight.Bold)
-        }
-        // Righe della tabella
-        LazyColumn {
-            items(righe) { riga ->
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Text(riga.codice, modifier = Modifier.weight(0.2f))
-                    Column(modifier = Modifier.weight(0.6f)) {
-                        Text(riga.descrizione)
-                        riga.lotto?.let {
-                            Text("Lotto: $it", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                    Text(riga.quantita, modifier = Modifier.weight(0.2f))
-                }
-            }
-        }
-    }
 }
 
 private fun formatDate(isoDate: String): String {
