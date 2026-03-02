@@ -96,8 +96,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                             .fillMaxWidth()
                             .weight(1f),
                         placeholder = { Text("Esempio di testo da scrivere qui:\n128 2\n122 2\n125 50\n...") },
-                        enabled = uiState !is StockMoveUiState.Loading,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        enabled = uiState !is StockMoveUiState.Loading
                     )
                 }
             }

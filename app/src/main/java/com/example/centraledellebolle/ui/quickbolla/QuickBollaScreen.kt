@@ -87,8 +87,7 @@ fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
                             .fillMaxWidth()
                             .weight(1f),
                         placeholder = { Text("Esempio di testo da scrivere qui:\n128 2\n122 2\n125 50\n...") },
-                        enabled = creationState !is QuickBollaUiState.Loading,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        enabled = creationState !is QuickBollaUiState.Loading
                     )
                 }
             }
