@@ -234,8 +234,11 @@ fun BollaItem(
 
             Text(text = bolla.clienteNome, style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
+            Text(text= bolla.clienteVia, style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(8.dp))
             Text(text = "Data: ${formatDate(bolla.data)}", style = MaterialTheme.typography.bodyMedium)
             Text(text = "Documento: ${bolla.tipoDocumentoNome} n. ${bolla.numero}", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "Cod. Cliente: ${bolla.clienteCodice}", style= MaterialTheme.typography.bodyMedium)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { onNavigateToDetail(bolla.id.toInt()) }, enabled = !isDeleting) {
                     Text("Dettagli")

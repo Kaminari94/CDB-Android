@@ -10,6 +10,8 @@ data class Bolla(
     val clienteNome: String,
     @SerializedName("cliente_via")
     val clienteVia: String,
+    @SerializedName("cliente_codice")
+    val clienteCodice: String,
     @SerializedName("tipo_documento_nome")
     val tipoDocumentoNome: String
 )
