@@ -29,16 +29,57 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
+val STOCK_MOVE_TEMPLATE = """
+# Latte Fresco
+600127 0
+600128 0
+600122 0
+600101 0
+600125 0
+600114 0
+600171 0
+600025 0
+600103 0
+600104 0
+# Latte UHT
+600140 0
+600141 0
+600144 0
+600145 0
+600139 0
+600142 0
+600244 0
+600119 0
+600120 0
+# Latte Bio
+600146 0
+600147 0
+600148 0
+# Latte ESL
+004500 0
+004501 0
+# Derivati
+600111 0
+600112 0
+# Uova
+600026 0
+600028 0
+600030 0
+# Casse
+027110/S 0
+027110/R 0
+""".trimIndent()
+
 @Composable
 fun StockMoveScreen(vm: StockMoveViewModel) {
 
     val uiState by vm.uiState.collectAsState()
-    var articles by remember { mutableStateOf("") }
+    var articles by remember { mutableStateOf(STOCK_MOVE_TEMPLATE) }
     var numero by remember { mutableStateOf("") }
     var moveType by remember { mutableStateOf(MoveType.CARICO) }
 
     if (uiState is StockMoveUiState.Success) {
-        articles = ""
+        articles = STOCK_MOVE_TEMPLATE
         numero = ""
     }
 
@@ -81,9 +122,10 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                         OutlinedTextField(
                             value = numero,
                             onValueChange = { numero = it },
-                            label = { Text("Numero") },
+                            label = { Text("Numero Documento") },
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = uiState !is StockMoveUiState.Loading
+                            enabled = uiState !is StockMoveUiState.Loading,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
                         Spacer(Modifier.height(16.dp))
                     }
@@ -95,7 +137,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
-                        placeholder = { Text("Esempio di testo da scrivere qui:\n128 2\n122 2\n125 50\n...") },
+                        placeholder = { Text("128 2\nPROVA 10\n...") },
                         enabled = uiState !is StockMoveUiState.Loading
                     )
                 }
@@ -113,7 +155,12 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                         SuccessView(movId = state.movId) { vm.resetState() }
                     }
                     is StockMoveUiState.Error -> {
-                        ErrorView(state.message) { vm.performStockMove(moveType, numero, articles) }
+                        ErrorView(state.message) { 
+                            val filtered = articles.lines()
+                                .filter { line -> line.isNotBlank() && !line.trim().startsWith("#") }
+                                .joinToString("\n")
+                            vm.performStockMove(moveType, numero, filtered) 
+                        }
                     }
                     is StockMoveUiState.Idle -> {
                         Text("Pronto per un movimento di magazzino.", style = MaterialTheme.typography.bodySmall)
@@ -123,7 +170,13 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
 
             if (uiState !is StockMoveUiState.Success) {
                 Button(
-                    onClick = { vm.performStockMove(moveType, numero, articles) },
+                    onClick = { 
+                        // Filtriamo i commenti prima di inviare al server
+                        val filtered = articles.lines()
+                            .filter { line -> line.isNotBlank() && !line.trim().startsWith("#") }
+                            .joinToString("\n")
+                        vm.performStockMove(moveType, numero, filtered) 
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = articles.isNotBlank() && uiState !is StockMoveUiState.Loading
                 ) {
