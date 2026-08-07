@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,8 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 val STOCK_MOVE_TEMPLATE = """
 # Latte Fresco
@@ -66,6 +66,7 @@ val STOCK_MOVE_TEMPLATE = """
 600028 0
 600030 0
 # Casse
+027110 0
 027110/S 0
 027110/R 0
 """.trimIndent()
@@ -83,11 +84,11 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
         numero = ""
     }
 
-    Scaffold {
+    Scaffold { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
+                .padding(paddingValues)
                 .padding(16.dp)
         ) {
             if (uiState !is StockMoveUiState.Success) {
@@ -124,8 +125,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                             onValueChange = { numero = it },
                             label = { Text("Numero Documento") },
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = uiState !is StockMoveUiState.Loading,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                            enabled = uiState !is StockMoveUiState.Loading
                         )
                         Spacer(Modifier.height(16.dp))
                     }
@@ -156,10 +156,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                     }
                     is StockMoveUiState.Error -> {
                         ErrorView(state.message) { 
-                            val filtered = articles.lines()
-                                .filter { line -> line.isNotBlank() && !line.trim().startsWith("#") }
-                                .joinToString("\n")
-                            vm.performStockMove(moveType, numero, filtered) 
+                            vm.performStockMove(moveType, numero, filterLines(articles, moveType)) 
                         }
                     }
                     is StockMoveUiState.Idle -> {
@@ -171,11 +168,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
             if (uiState !is StockMoveUiState.Success) {
                 Button(
                     onClick = { 
-                        // Filtriamo i commenti prima di inviare al server
-                        val filtered = articles.lines()
-                            .filter { line -> line.isNotBlank() && !line.trim().startsWith("#") }
-                            .joinToString("\n")
-                        vm.performStockMove(moveType, numero, filtered) 
+                        vm.performStockMove(moveType, numero, filterLines(articles, moveType)) 
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = articles.isNotBlank() && uiState !is StockMoveUiState.Loading
@@ -185,6 +178,49 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
             }
         }
     }
+}
+
+/**
+ * Filtra le righe inserite dall'utente:
+ * 1. Toglie commenti (#) e righe vuote
+ * 2. Toglie righe con quantità 0
+ * 3. Se CARICO: Assicura 3 valori (Codice, Qty, Lotto). Se manca Lotto, mette oggi + 6gg (DDMMYY).
+ * 4. Se RESO: Assicura 2 valori (Codice, Qty).
+ */
+private fun filterLines(input: String, moveType: MoveType): String {
+    val autoLotto = LocalDate.now().plusDays(6).format(DateTimeFormatter.ofPattern("ddMMyy"))
+    
+    return input.lines()
+        .map { it.trim() }
+        .filter { line ->
+            // Salta righe vuote o commenti
+            if (line.isEmpty() || line.startsWith("#")) return@filter false
+            
+            val parts = line.split(Regex("\\s+"))
+            if (parts.size >= 2) {
+                val qty = parts[1].toIntOrNull()
+                // Salta se quantità è 0 o non valida
+                qty != null && qty != 0
+            } else {
+                false
+            }
+        }
+        .map { line ->
+            val parts = line.split(Regex("\\s+")).toMutableList()
+            if (moveType == MoveType.CARICO) {
+                // Carico vuole 3 parametri: CODICE QUANTITA LOTTO
+                if (parts.size == 2) {
+                    parts.add(autoLotto)
+                } else if (parts.size >= 3 && (parts[2].isBlank() || parts[2] == "---")) {
+                    parts[2] = autoLotto
+                }
+                parts.take(3).joinToString(" ")
+            } else {
+                // Reso vuole 2 parametri: CODICE QUANTITA
+                parts.take(2).joinToString(" ")
+            }
+        }
+        .joinToString("\n")
 }
 
 @Composable
