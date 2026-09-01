@@ -1,6 +1,7 @@
 package com.example.centraledellebolle.ui.bolle
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,12 +15,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.centraledellebolle.data.QuickLineError
 
@@ -67,7 +71,7 @@ fun BollaEditScreen(
                     onClick = { vm.save(bollaId) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                         .imePadding(),
                     enabled = !currentState.isSaving
                 ) {
@@ -122,20 +126,37 @@ fun ValidationErrorContent(errors: List<QuickLineError>?, message: String?) {
 
 @Composable
 fun BollaEditContent(state: BollaEditUiState.Ready, vm: BollaEditViewModel, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(16.dp)) {
-        // Header
-        Text(text = state.bolla.clienteNome, style = MaterialTheme.typography.headlineSmall)
-        Text(text = "Data: ${state.bolla.data}")
-        Text(text = "Tipo: ${state.bolla.tipoDocumentoNome}")
-        state.bolla.numero?.let { Text(text = "Numero: $it") }
+    Column(modifier = modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Text(
+            text = state.bolla.clienteNome,
+            style = MaterialTheme.typography.titleLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        val metadata = buildList {
+            state.bolla.numero?.let { add("Bolla $it") }
+            add(state.bolla.data)
+            add(state.bolla.tipoDocumentoNome)
+        }.joinToString(" · ")
+        Text(
+            text = metadata,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        TextButton(onClick = { vm.addRow() }) {
+        TextButton(
+            onClick = { vm.addRow() },
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(modifier = Modifier.width(4.dp))
             Text("Aggiungi riga")
         }
 
-        // Table
         LazyColumn(modifier = Modifier.weight(1f)) {
             itemsIndexed(state.rows) { index, row ->
                 EditableRowItem(
@@ -144,6 +165,9 @@ fun BollaEditContent(state: BollaEditUiState.Ready, vm: BollaEditViewModel, modi
                     onRemove = { vm.removeRow(index) },
                     onCodiceChanged = { newCodice -> vm.onCodiceChanged(index, newCodice) }
                 )
+                if (index < state.rows.lastIndex) {
+                    HorizontalDivider()
+                }
             }
         }
     }
@@ -156,7 +180,7 @@ fun EditableRowItem(
     onRemove: () -> Unit,
     onCodiceChanged: (String) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = row.codice,
@@ -170,24 +194,38 @@ fun EditableRowItem(
                 onValueChange = onQtyChanged,
                 label = { Text("Qtà") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.width(80.dp)
+                textStyle = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.width(88.dp)
             )
             Spacer(modifier = Modifier.width(4.dp))
             IconButton(onClick = onRemove) {
                 Icon(Icons.Default.Delete, contentDescription = "Remove")
             }
         }
-        Text(
-            text = row.descrizione,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(start = 4.dp, top = 2.dp)
-        )
-        row.lotto?.let {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, top = 2.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = "Lotto: $it",
+                text = row.descrizione,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 4.dp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
+            row.lotto?.let {
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Lotto: $it",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
