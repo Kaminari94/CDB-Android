@@ -10,6 +10,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -123,8 +124,15 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
     val appContainer = (LocalContext.current.applicationContext as BolleApplication).container
 
     NavHost(navController = navController, startDestination = Screen.Bolle.route, modifier = modifier) {
-        composable(Screen.Bolle.route) {
+        composable(Screen.Bolle.route) { backStackEntry ->
             val vm: BolleViewModel = viewModel(factory = BolleViewModelFactory(appContainer.bolleRepository, appContainer.userPreferencesRepository))
+            val shouldRefresh = backStackEntry.savedStateHandle.get<Boolean>("refresh_bolle") ?: false
+            LaunchedEffect(shouldRefresh) {
+                if (shouldRefresh) {
+                    vm.refresh()
+                    backStackEntry.savedStateHandle["refresh_bolle"] = false
+                }
+            }
             BolleScreen(vm = vm, onNavigateToDetail = { bollaId ->
                 navController.navigate("bolla_detail/$bollaId")
             }, onNavigateToEdit = { bollaId ->
@@ -147,7 +155,17 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
                 navController.currentBackStackEntry?.savedStateHandle?.set("refresh", false)
             }
 
-            BollaDetailScreen(vm = vm, onNavigateBack = { navController.popBackStack() }, navController = navController)
+            BollaDetailScreen(
+                vm = vm,
+                onNavigateBack = { navController.popBackStack() },
+                onDeleted = {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("refresh_bolle", true)
+                    navController.popBackStack()
+                },
+                navController = navController
+            )
         }
         composable(
             route = "bolla_edit/{bollaId}",

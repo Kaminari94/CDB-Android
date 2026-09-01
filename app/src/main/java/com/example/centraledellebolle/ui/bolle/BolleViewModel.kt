@@ -23,6 +23,9 @@ class BolleViewModel(
     private val _selectedDate = MutableStateFlow(LocalDate.now())
     val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     private val _printingState = MutableStateFlow<PrintingUiState>(PrintingUiState.Idle)
     val printingState: StateFlow<PrintingUiState> = _printingState.asStateFlow()
 
@@ -54,6 +57,23 @@ class BolleViewModel(
     fun onDateSelected(date: LocalDate) {
         _selectedDate.value = date
         loadBolleForDate(date)
+    }
+
+    fun refresh() {
+        if (_isRefreshing.value || _bolleState.value is BolleUiState.Loading) return
+
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            val dateString = _selectedDate.value.format(DateTimeFormatter.ISO_LOCAL_DATE)
+            val result = bolleRepository.getBolle(dateString)
+            _bolleState.value = result.fold(
+                onSuccess = {
+                    if (it.results.isEmpty()) BolleUiState.Empty else BolleUiState.Success(it.results)
+                },
+                onFailure = { BolleUiState.Error(it.message ?: "Errore sconosciuto") }
+            )
+            _isRefreshing.value = false
+        }
     }
 
     fun printBolla(id: Int) {

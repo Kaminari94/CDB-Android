@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,7 +67,8 @@ fun BollaEditScreen(
                     onClick = { vm.save(bollaId) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(16.dp)
+                        .imePadding(),
                     enabled = !currentState.isSaving
                 ) {
                     if (currentState.isSaving) {
@@ -127,14 +129,14 @@ fun BollaEditContent(state: BollaEditUiState.Ready, vm: BollaEditViewModel, modi
         Text(text = "Tipo: ${state.bolla.tipoDocumentoNome}")
         state.bolla.numero?.let { Text(text = "Numero: $it") }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(onClick = { vm.addRow() }) {
             Text("Aggiungi riga")
         }
 
         // Table
-        LazyColumn {
+        LazyColumn(modifier = Modifier.weight(1f)) {
             itemsIndexed(state.rows) { index, row ->
                 EditableRowItem(
                     row = row,
@@ -154,7 +156,7 @@ fun EditableRowItem(
     onRemove: () -> Unit,
     onCodiceChanged: (String) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = row.codice,
@@ -162,7 +164,7 @@ fun EditableRowItem(
                 label = { Text("Codice") },
                 modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             OutlinedTextField(
                 value = row.qtyText,
                 onValueChange = onQtyChanged,
@@ -170,7 +172,7 @@ fun EditableRowItem(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.width(80.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             IconButton(onClick = onRemove) {
                 Icon(Icons.Default.Delete, contentDescription = "Remove")
             }
@@ -178,7 +180,7 @@ fun EditableRowItem(
         Text(
             text = row.descrizione,
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+            modifier = Modifier.padding(start = 4.dp, top = 2.dp)
         )
         row.lotto?.let {
             Text(

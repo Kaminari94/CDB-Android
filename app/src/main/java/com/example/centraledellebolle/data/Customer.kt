@@ -5,5 +5,7 @@ package com.example.centraledellebolle.data
 data class Customer(
     val id: Int,
     val nome: String,
-    val via: String
+    val via: String,
+    // Il backend precedente non lo inviava: mantenerlo nullable conserva la compatibilita.
+    val codice: String? = null
 )

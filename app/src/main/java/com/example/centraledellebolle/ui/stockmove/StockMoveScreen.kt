@@ -19,9 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -75,14 +72,9 @@ val STOCK_MOVE_TEMPLATE = """
 fun StockMoveScreen(vm: StockMoveViewModel) {
 
     val uiState by vm.uiState.collectAsState()
-    var articles by remember { mutableStateOf(STOCK_MOVE_TEMPLATE) }
-    var numero by remember { mutableStateOf("") }
-    var moveType by remember { mutableStateOf(MoveType.CARICO) }
-
-    if (uiState is StockMoveUiState.Success) {
-        articles = STOCK_MOVE_TEMPLATE
-        numero = ""
-    }
+    val articles by vm.articles.collectAsState()
+    val numero by vm.numero.collectAsState()
+    val moveType by vm.moveType.collectAsState()
 
     Scaffold { paddingValues ->
         Column(
@@ -98,7 +90,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
-                            onClick = { moveType = MoveType.CARICO },
+                            onClick = { vm.onMoveTypeChanged(MoveType.CARICO) },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (moveType == MoveType.CARICO) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
@@ -107,7 +99,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                             Text("Carico")
                         }
                         Button(
-                            onClick = { moveType = MoveType.RESO },
+                            onClick = { vm.onMoveTypeChanged(MoveType.RESO) },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (moveType == MoveType.RESO) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
@@ -122,7 +114,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
                     if (moveType == MoveType.CARICO) {
                         OutlinedTextField(
                             value = numero,
-                            onValueChange = { numero = it },
+                            onValueChange = vm::onNumeroChanged,
                             label = { Text("Numero Documento") },
                             modifier = Modifier.fillMaxWidth(),
                             enabled = uiState !is StockMoveUiState.Loading
@@ -132,7 +124,7 @@ fun StockMoveScreen(vm: StockMoveViewModel) {
 
                     OutlinedTextField(
                         value = articles,
-                        onValueChange = { articles = it },
+                        onValueChange = vm::onArticlesChanged,
                         label = { Text("Articoli (CODICE QUANTITÀ)") },
                         modifier = Modifier
                             .fillMaxWidth()

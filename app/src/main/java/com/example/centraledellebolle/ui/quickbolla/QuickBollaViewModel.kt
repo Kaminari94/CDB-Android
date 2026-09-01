@@ -6,7 +6,9 @@ import com.example.centraledellebolle.data.Customer
 import com.example.centraledellebolle.data.CustomersRepository
 import com.example.centraledellebolle.data.QuickBollaRepository
 import com.example.centraledellebolle.data.QuickBollaRequest
+import com.example.centraledellebolle.data.QuickBollaErrorResponse
 import com.example.centraledellebolle.data.QuickBollaValidationException
+import com.example.centraledellebolle.data.QuickLineError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +18,10 @@ class QuickBollaViewModel(
     private val quickBollaRepository: QuickBollaRepository,
     private val customersRepository: CustomersRepository
 ) : ViewModel() {
+
+    // Dato operativo: deve sopravvivere alla ricreazione della composizione (es. rotazione).
+    private val _rawLines = MutableStateFlow(BOLLA_TEMPLATE)
+    val rawLines: StateFlow<String> = _rawLines.asStateFlow()
 
     // Stato per la creazione della bolla
     private val _creationState = MutableStateFlow<QuickBollaUiState>(QuickBollaUiState.Idle())
@@ -37,7 +43,11 @@ class QuickBollaViewModel(
         viewModelScope.launch {
             _customersUiState.value = CustomersUiState.Loading
             try {
-                val customers = customersRepository.getCustomers()
+                val customers = customersRepository.getCustomers().sortedWith(
+                    compareBy<Customer> { it.codice.isNullOrBlank() }
+                        .thenBy { it.codice ?: "" }
+                        .thenBy { it.nome }
+                )
                 _customersUiState.value = CustomersUiState.Success(customers)
             } catch (e: Exception) {
                 _customersUiState.value = CustomersUiState.Error(e.message ?: "Impossibile caricare i clienti")
@@ -47,6 +57,28 @@ class QuickBollaViewModel(
 
     fun selectCustomer(customer: Customer) {
         _selectedCustomer.value = customer
+    }
+
+    fun onRawLinesChanged(value: String) {
+        _rawLines.value = value
+    }
+
+    fun validateRawLines(rawLines: String): List<QuickLineError> =
+        rawLines.lines().mapIndexedNotNull { index, line ->
+            val parts = line.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+            when {
+                parts.isEmpty() || line.trim().startsWith("#") -> null
+                parts.size != 2 -> QuickLineError(index + 1, "Formato non valido: usa CODICE QUANTITÀ")
+                parts[1].toIntOrNull() == null -> QuickLineError(index + 1, "Quantità non valida: usa un numero intero")
+                else -> null
+            }
+        }
+
+    fun showInputValidationErrors(rawLines: String, errors: List<QuickLineError>) {
+        _creationState.value = QuickBollaUiState.Error(
+            rawInput = rawLines,
+            validationError = QuickBollaErrorResponse(created = false, errors = errors)
+        )
     }
 
     fun createBolla(rawLines: String) {

@@ -22,6 +22,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -48,6 +49,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit, onNavigateToEdit: (Int) -> Unit) {
     val bolleState by vm.bolleState.collectAsState()
+    val isRefreshing by vm.isRefreshing.collectAsState()
     val selectedDate by vm.selectedDate.collectAsState()
     val printingState by vm.printingState.collectAsState()
     val deleteState by vm.deleteState.collectAsState()
@@ -99,23 +101,29 @@ fun BolleScreen(vm: BolleViewModel, onNavigateToDetail: (Int) -> Unit, onNavigat
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = vm::refresh,
+                modifier = Modifier.fillMaxSize()
             ) {
-                when (val state = bolleState) {
-                    is BolleUiState.Loading -> CircularProgressIndicator()
-                    is BolleUiState.Success -> BolleList(
-                        bolle = state.bolle,
-                        onNavigateToDetail = onNavigateToDetail,
-                        onNavigateToEdit = onNavigateToEdit,
-                        onPrint = { bollaId -> vm.printBolla(bollaId) },
-                        onDelete = { bollaId -> vm.requestDelete(bollaId) },
-                        isDeleting = isDeleting
-                    )
-                    is BolleUiState.Empty -> Text("Nessuna bolla per questa data.")
-                    is BolleUiState.Error -> Text(text = "Errore: ${state.message}")
-                    is BolleUiState.Idle -> { /* Do nothing */ }
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when (val state = bolleState) {
+                        is BolleUiState.Loading -> CircularProgressIndicator()
+                        is BolleUiState.Success -> BolleList(
+                            bolle = state.bolle,
+                            onNavigateToDetail = onNavigateToDetail,
+                            onNavigateToEdit = onNavigateToEdit,
+                            onPrint = { bollaId -> vm.printBolla(bollaId) },
+                            onDelete = { bollaId -> vm.requestDelete(bollaId) },
+                            isDeleting = isDeleting
+                        )
+                        is BolleUiState.Empty -> Text("Nessuna bolla per questa data.")
+                        is BolleUiState.Error -> Text(text = "Errore: ${state.message}")
+                        is BolleUiState.Idle -> { /* Do nothing */ }
+                    }
                 }
             }
         }

@@ -20,9 +20,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,28 +80,7 @@ val BOLLA_TEMPLATE = """
 fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
 
     val creationState by vm.creationState.collectAsState()
-    var rawLines by remember { mutableStateOf(BOLLA_TEMPLATE) }
-
-    // Sincronizza il testo locale con lo stato del ViewModel
-    LaunchedEffect(creationState) {
-        when (val state = creationState) {
-            is QuickBollaUiState.Idle -> {
-                // Se c'è un input precedente, usalo
-                if (state.previousInput.isNotEmpty()) {
-                    rawLines = state.previousInput
-                }
-            }
-            is QuickBollaUiState.Error -> {
-                // In caso di errore, mantieni il testo che l'ha causato
-                rawLines = state.rawInput
-            }
-            is QuickBollaUiState.Success -> {
-                // Svuota il campo solo dopo un successo
-                rawLines = BOLLA_TEMPLATE
-            }
-            else -> Unit
-        }
-    }
+    val rawLines by vm.rawLines.collectAsState()
 
     Scaffold { paddingValues ->
         Column(
@@ -110,7 +89,6 @@ fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // -- Sezione Input --
             if (creationState !is QuickBollaUiState.Success) {
                 Column(modifier = Modifier.weight(1f)) {
 
@@ -118,10 +96,27 @@ fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
 
                     Spacer(Modifier.height(16.dp))
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Righe (CODICE QUANTITÀ)", style = MaterialTheme.typography.labelLarge)
+                        TextButton(onClick = {
+                            vm.onRawLinesChanged(rawLines.lines().filter { line ->
+                                val trimmed = line.trim()
+                                if (trimmed.isEmpty() || trimmed.startsWith("#")) return@filter false
+                                val parts = trimmed.split(Regex("\\s+"))
+                                parts.size >= 2 && parts[1] != "0"
+                            }.joinToString("\n"))
+                        }) {
+                            Text("Pulisci Zeri")
+                        }
+                    }
+
                     OutlinedTextField(
                         value = rawLines,
-                        onValueChange = { rawLines = it },
-                        label = { Text("Righe (CODICE QUANTITÀ)") },
+                        onValueChange = vm::onRawLinesChanged,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
@@ -131,7 +126,6 @@ fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
                 }
             }
 
-            // -- Sezione Risultato/Stato --
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -159,27 +153,26 @@ fun QuickBollaScreen(vm: QuickBollaViewModel, onBollaCreated: () -> Unit) {
                 }
             }
 
-            // -- Bottone sticky in basso --
             if (creationState !is QuickBollaUiState.Success) {
                 val selectedCustomer by vm.selectedCustomer.collectAsState()
                 Button(
                     onClick = {
-                        // Filtriamo i commenti e le quantità zero prima di inviare
-                        val filteredLines = rawLines.lines()
-                            .filter { line ->
-                                val trimmed = line.trim()
-                                if (trimmed.isBlank() || trimmed.startsWith("#")) return@filter false
-                                
-                                val parts = trimmed.split(Regex("\\s+"))
-                                if (parts.size >= 2) {
-                                    val qty = parts.last().toIntOrNull()
-                                    qty != null && qty != 0
-                                } else {
-                                    false
+                        val validationErrors = vm.validateRawLines(rawLines)
+                        if (validationErrors.isNotEmpty()) {
+                            vm.showInputValidationErrors(rawLines, validationErrors)
+                        } else {
+                            val filteredLines = rawLines.lines()
+                                .filter { line ->
+                                    val trimmed = line.trim()
+                                    if (trimmed.isBlank() || trimmed.startsWith("#")) return@filter false
+                                    trimmed.split(Regex("\\s+"))[1].toIntOrNull()?.let { it != 0 } == true
                                 }
-                            }
-                            .joinToString("\n")
-                        vm.createBolla(filteredLines)
+                                .map { line ->
+                                    line.trim().split(Regex("\\s+")).take(2).joinToString(" ")
+                                }
+                                .joinToString("\n")
+                            vm.createBolla(filteredLines)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = selectedCustomer != null && rawLines.isNotBlank() && creationState !is QuickBollaUiState.Loading
@@ -222,7 +215,14 @@ private fun CustomerSelector(vm: QuickBollaViewModel) {
                     ) {
                         state.customers.forEach { customer ->
                             DropdownMenuItem(
-                                text = { Text(customer.nome + " - " + customer.via) },
+                                text = {
+                                    Text(
+                                            customer.codice
+                                                ?.takeIf { it.isNotBlank() }
+                                            ?.let { "$it - ${customer.nome} - ${customer.via}" }
+                                            ?: "${customer.nome} - ${customer.via}"
+                                    )
+                                },
                                 onClick = {
                                     vm.selectCustomer(customer)
                                     isExpanded = false
@@ -259,8 +259,8 @@ private fun SuccessView(vm: QuickBollaViewModel, bollaId: Int, onNavigate: () ->
         Text("Creata bolla con ID: $bollaId")
         Spacer(Modifier.height(16.dp))
         Button(onClick = {
-            vm.reset() // Resetta lo stato nel ViewModel
-            onNavigate() // Torna alla schermata precedente
+            vm.reset()
+            onNavigate()
         }) {
             Text("Torna alla lista")
         }

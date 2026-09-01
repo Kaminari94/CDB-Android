@@ -43,6 +43,7 @@ import java.time.format.DateTimeFormatter
 fun BollaDetailScreen(
     vm: BollaDetailViewModel,
     onNavigateBack: () -> Unit,
+    onDeleted: () -> Unit,
     navController: NavController
 ) {
     val bollaDetailState by vm.bollaDetailState.collectAsState()
@@ -67,9 +68,8 @@ fun BollaDetailScreen(
     LaunchedEffect(deleteState) {
         when (val state = deleteState) {
             is DeleteUiState.Success -> {
-                snackbarHostState.showSnackbar("Bolla eliminata con successo")
                 vm.resetDeleteState()
-                onNavigateBack()
+                onDeleted()
             }
             is DeleteUiState.Error -> {
                 snackbarHostState.showSnackbar(state.message)
