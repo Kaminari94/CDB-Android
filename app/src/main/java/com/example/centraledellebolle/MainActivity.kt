@@ -183,7 +183,11 @@ fun AppNavHost(navController: NavHostController, onLogout: () -> Unit, modifier:
         }
         composable(Screen.QuickBolla.route) {
             val vm: QuickBollaViewModel = viewModel(
-                factory = QuickBollaViewModelFactory(appContainer.quickBollaRepository, appContainer.customersRepository)
+                factory = QuickBollaViewModelFactory(
+                    appContainer.offlineQuickBollaRepository,
+                    appContainer.quickBollaRepository,
+                    appContainer.userPreferencesRepository
+                )
             )
             QuickBollaScreen(vm = vm, onBollaCreated = { navController.navigate(Screen.Bolle.route) })
         }

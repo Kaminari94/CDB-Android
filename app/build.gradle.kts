@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp") version "2.2.10-2.0.2"
 }
 
 android {
@@ -52,6 +53,11 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.7")
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    // Offline catalogue, issued documents and synchronization queue
+    implementation("androidx.room:room-runtime:2.7.0")
+    implementation("androidx.room:room-ktx:2.7.0")
+    ksp("androidx.room:room-compiler:2.7.0")
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
     //Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")

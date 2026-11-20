@@ -7,6 +7,9 @@ import com.example.centraledellebolle.data.QuickBollaRequest
 import com.example.centraledellebolle.data.QuickBollaSuccessResponse
 import com.example.centraledellebolle.data.QuickLineError
 import com.example.centraledellebolle.data.Receipt
+import com.example.centraledellebolle.data.QuickCatalogResponse
+import com.example.centraledellebolle.data.QuickSyncRequest
+import com.example.centraledellebolle.data.QuickSyncResponse
 import com.example.centraledellebolle.data.StockMoveRequest
 import com.example.centraledellebolle.data.StockMoveResponse
 import retrofit2.Response
@@ -50,6 +53,12 @@ interface ApiService {
 
     @POST("api/bolle/quick/")
     suspend fun quickBolla(@Body request: QuickBollaRequest): Response<QuickBollaSuccessResponse>
+
+    @GET("api/bolle/quick/catalog/")
+    suspend fun quickBollaCatalog(@Query("year") year: Int): QuickCatalogResponse
+
+    @POST("api/bolle/quick/sync/")
+    suspend fun syncQuickBolla(@Body request: QuickSyncRequest): Response<QuickSyncResponse>
 
     @GET("api/customers/")
     suspend fun getCustomers(): CustomersResponse

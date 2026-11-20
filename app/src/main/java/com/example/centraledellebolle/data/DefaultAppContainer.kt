@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.room.Room
 import com.example.centraledellebolle.network.ApiService
 import com.example.centraledellebolle.network.AuthInterceptor
 import com.example.centraledellebolle.network.BaseUrlResolver
@@ -46,6 +47,11 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val bluetoothPrinterService: BluetoothPrinterService by lazy {
         BluetoothPrinterService(context)
+    }
+
+    private val offlineDatabase: OfflineBollaDatabase by lazy {
+        Room.databaseBuilder(context.applicationContext, OfflineBollaDatabase::class.java, "offline-bolle.db")
+            .build()
     }
 
     private lateinit var apiService: ApiService
@@ -93,6 +99,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val quickBollaRepository: QuickBollaRepository
         get() = QuickBollaRepository(apiService)
+
+    override val offlineQuickBollaRepository: OfflineQuickBollaRepository
+        get() = OfflineQuickBollaRepository(context.applicationContext, offlineDatabase, apiService, bluetoothPrinterService)
 
     override val customersRepository: CustomersRepository
         get() = CustomersRepository(apiService)

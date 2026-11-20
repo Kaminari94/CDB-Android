@@ -7,6 +7,7 @@ interface AppContainer {
     val authRepository: AuthRepository
     val bolleRepository: BolleRepository
     val quickBollaRepository: QuickBollaRepository
+    val offlineQuickBollaRepository: OfflineQuickBollaRepository
     val customersRepository: CustomersRepository
     val healthRepository: HealthRepository
     val stockMoveRepository: StockMoveRepository
